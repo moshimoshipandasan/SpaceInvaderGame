@@ -20,6 +20,9 @@
             align-items: center;
             min-height: 100vh;
             overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 25% 25%, #111 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, #111 0%, transparent 50%);
         }
 
         .game-container {
@@ -32,8 +35,25 @@
         .game-header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             margin-bottom: 10px;
             font-size: 1.2em;
+            padding: 10px;
+            background: linear-gradient(to right, #30cf30, #25a825);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .game-info {
+            display: flex;
+            gap: 30px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         #gameCanvas {
@@ -43,6 +63,7 @@
             height: 600px;
             max-height: 80vh;
             image-rendering: pixelated;
+            box-shadow: 0 0 20px rgba(48, 207, 48, 0.5);
         }
 
         .controls {
@@ -52,17 +73,21 @@
 
         button {
             background-color: #30cf30;
-            color: #fff;
+            color: #000;
             border: none;
             padding: 10px 20px;
             font-size: 1.1em;
+            font-weight: bold;
             cursor: pointer;
             border-radius: 5px;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(48, 207, 48, 0.3);
         }
 
         button:hover {
             background-color: #25a825;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(48, 207, 48, 0.5);
         }
 
         .instructions {
@@ -80,25 +105,49 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            padding: 30px;
-            border: 2px solid #30cf30;
+            background-color: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border: 3px solid #30cf30;
             text-align: center;
             border-radius: 10px;
+            box-shadow: 0 0 30px rgba(48, 207, 48, 0.8);
         }
 
         .game-over h2 {
             color: #30cf30;
             margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #30cf30;
         }
 
         .game-over p {
             margin-bottom: 20px;
-            font-size: 1.2em;
+            font-size: 1.4em;
         }
 
         .hidden {
             display: none;
+        }
+
+        .combo-indicator {
+            position: absolute;
+            font-size: 1.5em;
+            color: #ffff00;
+            font-weight: bold;
+            animation: comboFloat 1s ease-out forwards;
+            pointer-events: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        @keyframes comboFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
         }
 
         @media (max-width: 600px) {
@@ -108,6 +157,8 @@
 
             .game-header {
                 font-size: 1em;
+                flex-direction: column;
+                gap: 10px;
             }
 
             #gameCanvas {
@@ -123,8 +174,12 @@
 <body>
     <div class="game-container">
         <div class="game-header">
-            <div class="score">Score: <span id="score">0</span></div>
-            <div class="lives">Lives: <span id="lives">3</span></div>
+            <div class="game-info">
+                <div class="info-item">Score: <span id="score">0</span></div>
+                <div class="info-item">High Score: <span id="highScore">0</span></div>
+                <div class="info-item">Level: <span id="level">1</span></div>
+            </div>
+            <div class="info-item">Lives: <span id="lives">3</span></div>
         </div>
         <canvas id="gameCanvas"></canvas>
         <div class="controls">
@@ -139,6 +194,7 @@
         <div id="gameOver" class="game-over hidden">
             <h2>Game Over</h2>
             <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Level Reached: <span id="finalLevel">1</span></p>
             <button id="restartButton">Play Again</button>
         </div>
     </div>
@@ -167,6 +223,32 @@
 
             playHit() {
                 this.playSound(440, 0.1, 'square', 0.3, 0);
+            }
+
+            playPowerUp() {
+                const notes = [523.25, 659.25, 783.99];
+                notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        this.playSound(freq, 0.15, 'sine', 0.3, 0);
+                    }, i * 100);
+                });
+            }
+
+            playUFO() {
+                this.playSound(150, 0.5, 'sine', 0.2, 0);
+            }
+
+            playBarrierHit() {
+                this.playSound(200, 0.1, 'triangle', 0.2, 0);
+            }
+
+            playLevelUp() {
+                const notes = [261.63, 329.63, 391.995, 523.25];
+                notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        this.playSound(freq, 0.2, 'square', 0.3, 0);
+                    }, i * 150);
+                });
             }
 
             playGameOver() {
@@ -215,6 +297,32 @@
             }
         }
 
+        class Particle {
+            constructor(x, y, color, size = 2) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                this.color = color;
+                this.size = size;
+                this.life = 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.02;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+                ctx.restore();
+            }
+        }
+
         class Game {
             constructor() {
                 this.canvas = document.getElementById('gameCanvas');
@@ -222,9 +330,12 @@
                 this.setupCanvas();
                 
                 this.score = 0;
+                this.highScore = localStorage.getItem('spaceInvadersHighScore') || 0;
                 this.lives = 3;
                 this.gameActive = false;
                 this.level = 1;
+                this.combo = 0;
+                this.lastKillTime = 0;
                 
                 this.soundFX = new SoundFX();
                 
@@ -234,13 +345,21 @@
                     width: 30,
                     height: 30,
                     speed: 5,
-                    projectiles: []
+                    projectiles: [],
+                    powerUp: null,
+                    powerUpTime: 0
                 };
                 
                 this.enemies = [];
                 this.enemyProjectiles = [];
                 this.enemySpeed = 2;
                 this.enemyDirection = 1;
+                
+                this.barriers = [];
+                this.powerUps = [];
+                this.particles = [];
+                this.ufo = null;
+                this.stars = [];
                 
                 this.keys = {
                     left: false,
@@ -251,9 +370,21 @@
                 this.lastShot = 0;
                 this.shootDelay = 250;
                 
+                this.initializeStars();
                 this.bindEvents();
                 this.updateScoreDisplay();
                 this.updateLivesDisplay();
+            }
+
+            initializeStars() {
+                for (let i = 0; i < 100; i++) {
+                    this.stars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 2,
+                        speed: Math.random() * 0.5 + 0.1
+                    });
+                }
             }
 
             drawPixelArt(x, y, design, color, scale = 2) {
@@ -283,21 +414,105 @@
                     [0,0,1,1,1,0,0,1,1,1,0,0],
                     [0,0,0,1,0,0,0,0,1,0,0,0]
                 ];
-                this.drawPixelArt(x, y, playerDesign, '#30cf30', 2);
+                const color = this.player.powerUp ? '#ffff00' : '#30cf30';
+                this.drawPixelArt(x, y, playerDesign, color, 2);
             }
 
-            drawInvader(x, y) {
-                const invaderDesign = [
-                    [0,0,1,0,0,0,0,0,1,0,0],
-                    [0,0,0,1,0,0,0,1,0,0,0],
-                    [0,0,1,1,1,1,1,1,1,0,0],
-                    [0,1,1,0,1,1,1,0,1,1,0],
-                    [1,1,1,1,1,1,1,1,1,1,1],
-                    [1,0,1,1,1,1,1,1,1,0,1],
-                    [1,0,1,0,0,0,0,0,1,0,1],
-                    [0,0,0,1,1,0,1,1,0,0,0]
+            drawInvader(x, y, type = 1) {
+                let invaderDesign, color;
+                
+                if (type === 1) {
+                    invaderDesign = [
+                        [0,0,1,0,0,0,0,0,1,0,0],
+                        [0,0,0,1,0,0,0,1,0,0,0],
+                        [0,0,1,1,1,1,1,1,1,0,0],
+                        [0,1,1,0,1,1,1,0,1,1,0],
+                        [1,1,1,1,1,1,1,1,1,1,1],
+                        [1,0,1,1,1,1,1,1,1,0,1],
+                        [1,0,1,0,0,0,0,0,1,0,1],
+                        [0,0,0,1,1,0,1,1,0,0,0]
+                    ];
+                    color = '#ff0000';
+                } else if (type === 2) {
+                    invaderDesign = [
+                        [0,0,0,1,1,1,1,0,0,0],
+                        [0,1,1,1,1,1,1,1,1,0],
+                        [1,1,1,1,1,1,1,1,1,1],
+                        [1,1,0,1,1,1,1,0,1,1],
+                        [1,1,1,1,1,1,1,1,1,1],
+                        [0,0,1,0,0,0,0,1,0,0],
+                        [0,1,0,1,0,0,1,0,1,0],
+                        [1,0,1,0,0,0,0,1,0,1]
+                    ];
+                    color = '#ff00ff';
+                } else {
+                    invaderDesign = [
+                        [0,0,0,1,1,1,1,0,0,0],
+                        [0,0,1,1,1,1,1,1,0,0],
+                        [0,1,0,0,1,1,0,0,1,0],
+                        [0,1,0,1,1,1,1,0,1,0],
+                        [0,1,1,1,1,1,1,1,1,0],
+                        [0,0,1,0,1,1,0,1,0,0],
+                        [0,1,0,0,0,0,0,0,1,0],
+                        [0,0,1,0,0,0,0,1,0,0]
+                    ];
+                    color = '#00ffff';
+                }
+                
+                this.drawPixelArt(x, y, invaderDesign, color, 2);
+            }
+
+            drawUFO(x, y) {
+                const ufoDesign = [
+                    [0,0,0,0,1,1,1,1,1,1,0,0,0,0],
+                    [0,0,1,1,1,1,1,1,1,1,1,1,0,0],
+                    [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
+                    [1,1,0,1,0,1,0,0,1,0,1,0,1,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [0,0,1,1,1,0,0,0,0,1,1,1,0,0],
+                    [0,0,0,1,0,0,0,0,0,0,1,0,0,0]
                 ];
-                this.drawPixelArt(x, y, invaderDesign, '#ff0000', 2);
+                this.drawPixelArt(x, y, ufoDesign, '#ffa500', 2);
+            }
+
+            drawBarrier(x, y, health) {
+                const colors = ['#00ff00', '#ffff00', '#ff8800', '#ff0000'];
+                const color = colors[Math.max(0, 3 - health)];
+                
+                const barrierDesign = [
+                    [0,0,1,1,1,1,1,1,1,1,1,1,0,0],
+                    [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,0,0,0,0,1,1,1,1,1],
+                    [1,1,1,1,0,0,0,0,0,0,1,1,1,1],
+                    [1,1,1,0,0,0,0,0,0,0,0,1,1,1]
+                ];
+                
+                this.drawPixelArt(x, y, barrierDesign, color, 2);
+            }
+
+            drawPowerUp(x, y, type) {
+                const powerUpDesign = [
+                    [0,0,1,1,1,1,0,0],
+                    [0,1,1,1,1,1,1,0],
+                    [1,1,0,1,1,0,1,1],
+                    [1,1,1,1,1,1,1,1],
+                    [1,1,1,1,1,1,1,1],
+                    [1,1,0,1,1,0,1,1],
+                    [0,1,1,1,1,1,1,0],
+                    [0,0,1,1,1,1,0,0]
+                ];
+                
+                const colors = {
+                    'rapid': '#ff00ff',
+                    'double': '#00ffff',
+                    'shield': '#ffff00'
+                };
+                
+                this.drawPixelArt(x, y, powerUpDesign, colors[type] || '#ffffff', 2);
             }
             
             setupCanvas() {
@@ -327,6 +542,7 @@
                 
                 window.addEventListener('resize', () => {
                     this.setupCanvas();
+                    this.initializeStars();
                 });
             }
             
@@ -335,16 +551,24 @@
                 this.score = 0;
                 this.lives = 3;
                 this.level = 1;
+                this.combo = 0;
                 this.enemies = [];
                 this.enemyProjectiles = [];
                 this.player.projectiles = [];
                 this.player.x = this.canvas.width / 2 - 15;
+                this.player.powerUp = null;
+                this.player.powerUpTime = 0;
+                this.barriers = [];
+                this.powerUps = [];
+                this.particles = [];
+                this.ufo = null;
                 
                 document.getElementById('gameOver').classList.add('hidden');
                 this.updateScoreDisplay();
                 this.updateLivesDisplay();
                 
                 this.spawnEnemies();
+                this.spawnBarriers();
                 this.soundFX.startBGM();
                 this.gameLoop();
             }
@@ -358,23 +582,93 @@
                 
                 for (let row = 0; row < rows; row++) {
                     for (let col = 0; col < cols; col++) {
+                        const type = row === 0 ? 3 : (row <= 2 ? 2 : 1);
+                        const points = type === 3 ? 300 : (type === 2 ? 200 : 100);
+                        
                         this.enemies.push({
                             x: col * (enemyWidth + padding) + padding,
                             y: row * (enemyHeight + padding) + padding,
                             width: enemyWidth,
-                            height: enemyHeight
+                            height: enemyHeight,
+                            type: type,
+                            points: points
                         });
                     }
+                }
+            }
+            
+            spawnBarriers() {
+                const barrierWidth = 60;
+                const barrierCount = 4;
+                const spacing = this.canvas.width / (barrierCount + 1);
+                
+                for (let i = 0; i < barrierCount; i++) {
+                    this.barriers.push({
+                        x: spacing * (i + 1) - barrierWidth / 2,
+                        y: this.canvas.height - 150,
+                        width: barrierWidth,
+                        height: 40,
+                        health: 4
+                    });
+                }
+            }
+            
+            spawnUFO() {
+                if (!this.ufo && Math.random() < 0.003) {
+                    this.ufo = {
+                        x: -50,
+                        y: 50,
+                        width: 40,
+                        height: 20,
+                        speed: 2 + Math.random() * 2,
+                        points: 500
+                    };
+                    this.soundFX.playUFO();
+                }
+            }
+            
+            spawnPowerUp(x, y) {
+                if (Math.random() < 0.1) {
+                    const types = ['rapid', 'double', 'shield'];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    
+                    this.powerUps.push({
+                        x: x,
+                        y: y,
+                        width: 20,
+                        height: 20,
+                        type: type,
+                        speed: 2
+                    });
                 }
             }
             
             updateScoreDisplay() {
                 document.getElementById('score').textContent = this.score;
                 document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('highScore').textContent = this.highScore;
+                document.getElementById('level').textContent = this.level;
+                document.getElementById('finalLevel').textContent = this.level;
+                
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem('spaceInvadersHighScore', this.highScore);
+                }
             }
             
             updateLivesDisplay() {
                 document.getElementById('lives').textContent = this.lives;
+            }
+            
+            showCombo(x, y, combo) {
+                const comboDiv = document.createElement('div');
+                comboDiv.className = 'combo-indicator';
+                comboDiv.textContent = `${combo}x COMBO!`;
+                comboDiv.style.left = x + 'px';
+                comboDiv.style.top = y + 'px';
+                document.body.appendChild(comboDiv);
+                
+                setTimeout(() => comboDiv.remove(), 1000);
             }
             
             gameLoop() {
@@ -386,6 +680,16 @@
             }
             
             update() {
+                // Update stars
+                this.stars.forEach(star => {
+                    star.y += star.speed;
+                    if (star.y > this.canvas.height) {
+                        star.y = 0;
+                        star.x = Math.random() * this.canvas.width;
+                    }
+                });
+                
+                // Player movement
                 if (this.keys.left && this.player.x > 0) {
                     this.player.x -= this.player.speed;
                 }
@@ -393,20 +697,44 @@
                     this.player.x += this.player.speed;
                 }
                 
+                // Handle shooting with power-ups
                 if (this.keys.space) {
                     const now = Date.now();
-                    if (now - this.lastShot >= this.shootDelay) {
-                        this.player.projectiles.push({
-                            x: this.player.x + this.player.width / 2,
-                            y: this.player.y,
-                            width: 3,
-                            height: 15
-                        });
+                    const delay = this.player.powerUp === 'rapid' ? 125 : this.shootDelay;
+                    
+                    if (now - this.lastShot >= delay) {
+                        if (this.player.powerUp === 'double') {
+                            this.player.projectiles.push({
+                                x: this.player.x + this.player.width / 2 - 10,
+                                y: this.player.y,
+                                width: 3,
+                                height: 15
+                            });
+                            this.player.projectiles.push({
+                                x: this.player.x + this.player.width / 2 + 10,
+                                y: this.player.y,
+                                width: 3,
+                                height: 15
+                            });
+                        } else {
+                            this.player.projectiles.push({
+                                x: this.player.x + this.player.width / 2,
+                                y: this.player.y,
+                                width: 3,
+                                height: 15
+                            });
+                        }
                         this.soundFX.playShoot();
                         this.lastShot = now;
                     }
                 }
                 
+                // Update power-up timer
+                if (this.player.powerUp && Date.now() - this.player.powerUpTime > 10000) {
+                    this.player.powerUp = null;
+                }
+                
+                // Update projectiles
                 this.player.projectiles = this.player.projectiles.filter(projectile => {
                     projectile.y -= 7;
                     return projectile.y > 0;
@@ -417,6 +745,19 @@
                     return projectile.y < this.canvas.height;
                 });
                 
+                // Update power-ups
+                this.powerUps = this.powerUps.filter(powerUp => {
+                    powerUp.y += powerUp.speed;
+                    return powerUp.y < this.canvas.height;
+                });
+                
+                // Update particles
+                this.particles = this.particles.filter(particle => {
+                    particle.update();
+                    return particle.life > 0;
+                });
+                
+                // Enemy movement
                 let touchedEdge = false;
                 this.enemies.forEach(enemy => {
                     enemy.x += this.enemySpeed * this.enemyDirection;
@@ -432,7 +773,9 @@
                     });
                 }
                 
-                if (Math.random() < 0.02 && this.enemies.length > 0) {
+                // Enemy shooting
+                const shootChance = 0.01 + (this.level * 0.002);
+                if (Math.random() < shootChance && this.enemies.length > 0) {
                     const shooter = this.enemies[Math.floor(Math.random() * this.enemies.length)];
                     this.enemyProjectiles.push({
                         x: shooter.x + shooter.width / 2,
@@ -442,46 +785,155 @@
                     });
                 }
                 
+                // Update UFO
+                if (this.ufo) {
+                    this.ufo.x += this.ufo.speed;
+                    if (this.ufo.x > this.canvas.width + 50) {
+                        this.ufo = null;
+                    }
+                }
+                
+                // Spawn UFO
+                this.spawnUFO();
+                
                 this.checkCollisions();
                 
+                // Check if enemies reached player
                 if (this.enemies.some(enemy => enemy.y + enemy.height >= this.player.y)) {
                     this.gameOver();
                 }
             }
             
             checkCollisions() {
+                // Player projectiles vs enemies
                 this.player.projectiles = this.player.projectiles.filter(projectile => {
                     let hit = false;
+                    
+                    // Check enemy collisions
                     this.enemies = this.enemies.filter(enemy => {
                         if (this.checkCollision(projectile, enemy)) {
                             hit = true;
-                            this.score += 100;
+                            
+                            // Combo system
+                            const now = Date.now();
+                            if (now - this.lastKillTime < 2000) {
+                                this.combo++;
+                            } else {
+                                this.combo = 1;
+                            }
+                            this.lastKillTime = now;
+                            
+                            const points = enemy.points * this.combo;
+                            this.score += points;
+                            
+                            if (this.combo > 1) {
+                                const rect = this.canvas.getBoundingClientRect();
+                                this.showCombo(rect.left + enemy.x, rect.top + enemy.y, this.combo);
+                            }
+                            
+                            // Create explosion particles
+                            for (let i = 0; i < 10; i++) {
+                                this.particles.push(new Particle(
+                                    enemy.x + enemy.width / 2,
+                                    enemy.y + enemy.height / 2,
+                                    enemy.type === 3 ? '#00ffff' : (enemy.type === 2 ? '#ff00ff' : '#ff0000')
+                                ));
+                            }
+                            
+                            this.spawnPowerUp(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
                             this.soundFX.playExplosion();
                             this.updateScoreDisplay();
                             return false;
                         }
                         return true;
                     });
+                    
+                    // Check barrier collisions
+                    this.barriers.forEach(barrier => {
+                        if (this.checkCollision(projectile, barrier)) {
+                            hit = true;
+                            barrier.health--;
+                            this.soundFX.playBarrierHit();
+                            if (barrier.health <= 0) {
+                                const index = this.barriers.indexOf(barrier);
+                                this.barriers.splice(index, 1);
+                            }
+                        }
+                    });
+                    
+                    // Check UFO collision
+                    if (this.ufo && this.checkCollision(projectile, this.ufo)) {
+                        hit = true;
+                        this.score += this.ufo.points;
+                        for (let i = 0; i < 15; i++) {
+                            this.particles.push(new Particle(
+                                this.ufo.x + this.ufo.width / 2,
+                                this.ufo.y + this.ufo.height / 2,
+                                '#ffa500'
+                            ));
+                        }
+                        this.soundFX.playExplosion();
+                        this.updateScoreDisplay();
+                        this.ufo = null;
+                    }
+                    
                     return !hit;
                 });
                 
+                // Enemy projectiles vs player and barriers
                 this.enemyProjectiles = this.enemyProjectiles.filter(projectile => {
+                    // Check barrier collisions
+                    let hitBarrier = false;
+                    this.barriers.forEach(barrier => {
+                        if (this.checkCollision(projectile, barrier)) {
+                            hitBarrier = true;
+                            barrier.health--;
+                            this.soundFX.playBarrierHit();
+                            if (barrier.health <= 0) {
+                                const index = this.barriers.indexOf(barrier);
+                                this.barriers.splice(index, 1);
+                            }
+                        }
+                    });
+                    if (hitBarrier) return false;
+                    
+                    // Check player collision
                     if (this.checkCollision(projectile, this.player)) {
-                        this.lives--;
-                        this.soundFX.playHit();
-                        this.updateLivesDisplay();
-                        if (this.lives <= 0) {
-                            this.gameOver();
+                        if (this.player.powerUp !== 'shield') {
+                            this.lives--;
+                            this.soundFX.playHit();
+                            this.updateLivesDisplay();
+                            if (this.lives <= 0) {
+                                this.gameOver();
+                            }
+                        } else {
+                            this.player.powerUp = null;
+                            this.soundFX.playHit();
                         }
                         return false;
                     }
                     return true;
                 });
                 
+                // Player vs power-ups
+                this.powerUps = this.powerUps.filter(powerUp => {
+                    if (this.checkCollision(powerUp, this.player)) {
+                        this.player.powerUp = powerUp.type;
+                        this.player.powerUpTime = Date.now();
+                        this.soundFX.playPowerUp();
+                        return false;
+                    }
+                    return true;
+                });
+                
+                // Check level completion
                 if (this.enemies.length === 0) {
                     this.level++;
-                    this.enemySpeed = Math.min(this.enemySpeed + 0.5, 5);
+                    this.enemySpeed = Math.min(this.enemySpeed + 0.3, 5);
+                    this.soundFX.playLevelUp();
                     this.spawnEnemies();
+                    this.spawnBarriers();
+                    this.updateScoreDisplay();
                 }
             }
             
@@ -502,11 +954,34 @@
             draw() {
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 
+                // Draw stars
+                this.ctx.fillStyle = '#ffffff';
+                this.stars.forEach(star => {
+                    this.ctx.fillRect(star.x, star.y, star.size, star.size);
+                });
+                
+                // Draw barriers
+                this.barriers.forEach(barrier => {
+                    this.drawBarrier(barrier.x, barrier.y, barrier.health);
+                });
+                
+                // Draw particles
+                this.particles.forEach(particle => {
+                    particle.draw(this.ctx);
+                });
+                
                 // Draw player
                 this.drawPlayer(this.player.x, this.player.y);
                 
+                // Draw power-up indicator
+                if (this.player.powerUp) {
+                    this.ctx.fillStyle = '#ffff00';
+                    this.ctx.font = '14px Arial';
+                    this.ctx.fillText(`Power: ${this.player.powerUp.toUpperCase()}`, 10, this.canvas.height - 10);
+                }
+                
                 // Draw player projectiles
-                this.ctx.fillStyle = '#fff';
+                this.ctx.fillStyle = this.player.powerUp === 'double' ? '#00ffff' : '#fff';
                 this.player.projectiles.forEach(projectile => {
                     this.ctx.fillRect(
                         projectile.x,
@@ -518,7 +993,7 @@
                 
                 // Draw enemies
                 this.enemies.forEach(enemy => {
-                    this.drawInvader(enemy.x, enemy.y);
+                    this.drawInvader(enemy.x, enemy.y, enemy.type);
                 });
                 
                 // Draw enemy projectiles
@@ -531,6 +1006,25 @@
                         projectile.height
                     );
                 });
+                
+                // Draw power-ups
+                this.powerUps.forEach(powerUp => {
+                    this.drawPowerUp(powerUp.x, powerUp.y, powerUp.type);
+                });
+                
+                // Draw UFO
+                if (this.ufo) {
+                    this.drawUFO(this.ufo.x, this.ufo.y);
+                }
+                
+                // Draw level indicator
+                if (this.enemies.length === 0 && this.gameActive) {
+                    this.ctx.fillStyle = '#30cf30';
+                    this.ctx.font = 'bold 36px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(`LEVEL ${this.level}`, this.canvas.width / 2, this.canvas.height / 2);
+                    this.ctx.textAlign = 'left';
+                }
             }
         }
 
