@@ -1,44 +1,44 @@
-# Space Invaders Game
+# スペースインベーダーゲーム
 
-A classic Space Invaders game implementation using HTML5 Canvas and JavaScript with retro pixel art graphics and 8-bit sound effects.
+HTML5 CanvasとJavaScriptを使用した、レトロなピクセルアートグラフィックスと8ビットサウンドエフェクトを特徴とするクラシックなスペースインベーダーゲームの実装です。
 
-## Features
+## 特徴
 
-- Retro pixel art graphics
-- 8-bit style sound effects and background music
-- Responsive design
-- Keyboard controls
-- Progressive difficulty
-- Score tracking
-- Lives system
+- レトロなピクセルアートグラフィックス
+- 8ビットスタイルのサウンドエフェクトとBGM
+- レスポンシブデザイン
+- キーボード操作
+- 段階的な難易度上昇
+- スコアトラッキング
+- ライフシステム
 
-## How to Play
+## 遊び方
 
-1. Open `index.html` in a modern web browser
-2. Click "Start Game" to begin
-3. Use arrow keys or A/D keys to move left/right
-4. Press spacebar to shoot
-5. Destroy all invaders to advance to the next level
-6. Avoid enemy projectiles and prevent invaders from reaching the bottom
+1. 最新のウェブブラウザで `index.html` を開く
+2. 「Start Game」をクリックしてゲームを開始
+3. 矢印キーまたはA/Dキーで左右に移動
+4. スペースキーで射撃
+5. すべてのインベーダーを倒して次のレベルに進む
+6. 敵の弾を避け、インベーダーが下に到達するのを防ぐ
 
-## Controls
+## 操作方法
 
-- Left Arrow / A: Move Left
-- Right Arrow / D: Move Right
-- Spacebar: Shoot
-- Start Game button: Begin new game
-- Play Again button: Restart after game over
+- 左矢印 / A: 左に移動
+- 右矢印 / D: 右に移動
+- スペースキー: 射撃
+- Start Gameボタン: 新しいゲームを開始
+- Play Againボタン: ゲームオーバー後に再スタート
 
-## Technical Details
+## 技術仕様
 
-- Built with vanilla JavaScript
-- Uses HTML5 Canvas for rendering
-- Web Audio API for sound effects
-- No external dependencies required
+- バニラJavaScriptで構築
+- レンダリングにHTML5 Canvasを使用
+- サウンドエフェクトにWeb Audio APIを使用
+- 外部依存関係なし
 
-## Browser Support
+## ブラウザサポート
 
-Works in all modern browsers that support HTML5 Canvas and Web Audio API:
+HTML5 CanvasとWeb Audio APIをサポートするすべての最新ブラウザで動作します：
 - Chrome
 - Firefox
 - Safari
