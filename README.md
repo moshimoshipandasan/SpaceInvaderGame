@@ -29,9 +29,27 @@ A classic Space Invaders game implementation using HTML5 Canvas and JavaScript w
 - Start Game button: Begin new game
 - Play Again button: Restart after game over
 
+## Project Structure
+
+```
+SpaceInvaderGame/
+├── index.html          # Main HTML file
+├── styles.css          # Game styles
+├── js/
+│   ├── constants.js    # Game configuration and constants
+│   ├── Game.js         # Main game logic
+│   ├── GameObject.js   # Game entity classes (Player, Enemy, Projectile)
+│   ├── Renderer.js     # Rendering engine
+│   ├── SoundManager.js # Sound effects and music management
+│   ├── InputHandler.js # Keyboard input handling
+│   └── main.js         # Game initialization
+└── README.md          # This file
+```
+
 ## Technical Details
 
-- Built with vanilla JavaScript
+- Built with vanilla JavaScript using object-oriented programming
+- Modular architecture with separation of concerns
 - Uses HTML5 Canvas for rendering
 - Web Audio API for sound effects
 - No external dependencies required
